@@ -21,7 +21,6 @@ public class ClinicFrame extends JFrame {
     private final ClinicManager manager = new ClinicManager();
 
     // GUI Components (Week 13)
-    private final JTextField txtId = new JTextField();
     private final JTextField txtName = new JTextField();
     private final JTextField txtAge = new JTextField();
     private final JComboBox<String> cmbPoli = new JComboBox<>(new String[]{
@@ -33,7 +32,6 @@ public class ClinicFrame extends JFrame {
     private final JTextField txtSearch = new JTextField(10);
 
     // Label peringatan merah di bawah tiap kolom
-    private final JLabel lblIdWarn = new JLabel(" ");
     private final JLabel lblNameWarn = new JLabel(" ");
     private final JLabel lblAgeWarn = new JLabel(" ");
     private final JLabel lblBpjsWarn = new JLabel(" ");
@@ -137,25 +135,18 @@ public class ClinicFrame extends JFrame {
         formPanel.setBorder(new TitledBorder("Form Pendaftaran Pasien Baru"));
         formPanel.setPreferredSize(new Dimension(340, 0));
 
-        txtId.setBorder(normalBorder);
         txtName.setBorder(normalBorder);
         txtAge.setBorder(normalBorder);
         txtComplaint.setBorder(normalBorder);
         txtBpjsNo.setBorder(normalBorder);
 
         Font warnFont = new Font("SansSerif", Font.BOLD, 11);
-        lblIdWarn.setForeground(Color.RED);
-        lblIdWarn.setFont(warnFont);
         lblNameWarn.setForeground(Color.RED);
         lblNameWarn.setFont(warnFont);
         lblAgeWarn.setForeground(Color.RED);
         lblAgeWarn.setFont(warnFont);
         lblBpjsWarn.setForeground(Color.RED);
         lblBpjsWarn.setFont(warnFont);
-
-        formPanel.add(new JLabel("ID Pasien (angka saja, contoh: 001):"));
-        formPanel.add(txtId);
-        formPanel.add(lblIdWarn);
 
         formPanel.add(new JLabel("Nama Lengkap Pasien (HURUF KAPITAL):"));
         formPanel.add(txtName);
@@ -286,28 +277,7 @@ public class ClinicFrame extends JFrame {
 
     // Validasi otomatis saat kursor keluar dari kolom (focusLost) & saat isi berubah
     private void setupFocusAndLiveValidation() {
-        // 1. ID Pasien: wajib angka saja
-        Runnable validateId = () -> {
-            String val = txtId.getText().trim();
-            if (!val.isEmpty() && !val.matches("\\d+")) {
-                txtId.setBorder(errorBorder);
-                lblIdWarn.setText("Peringatan: ID Pasien harus berupa angka!");
-            } else {
-                txtId.setBorder(normalBorder);
-                lblIdWarn.setText(" ");
-            }
-        };
-        txtId.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusLost(FocusEvent e) { validateId.run(); }
-        });
-        txtId.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) { validateId.run(); }
-            public void removeUpdate(DocumentEvent e) { validateId.run(); }
-            public void changedUpdate(DocumentEvent e) { validateId.run(); }
-        });
-
-        // 2. Nama Lengkap: wajib huruf KAPITAL semua
+        // Validasi Nama Lengkap wajib huruf KAPITAL semua
         Runnable validateName = () -> {
             String val = txtName.getText();
             if (!val.isEmpty() && !val.equals(val.toUpperCase())) {
@@ -328,7 +298,7 @@ public class ClinicFrame extends JFrame {
             public void changedUpdate(DocumentEvent e) { validateName.run(); }
         });
 
-        // 3. Umur: wajib bentuk angka saja
+        // 2. Umur: wajib bentuk angka saja
         Runnable validateAge = () -> {
             String val = txtAge.getText().trim();
             if (!val.isEmpty() && !val.matches("\\d+")) {
@@ -349,7 +319,7 @@ public class ClinicFrame extends JFrame {
             public void changedUpdate(DocumentEvent e) { validateAge.run(); }
         });
 
-        // 4. Nomor BPJS: wajib 13 digit angka jika BPJS dicentang
+        // 3. Nomor BPJS: wajib 13 digit angka jika BPJS dicentang
         Runnable validateBpjs = () -> {
             if (!chkBpjs.isSelected()) {
                 txtBpjsNo.setBorder(normalBorder);
@@ -378,8 +348,7 @@ public class ClinicFrame extends JFrame {
 
     private void handleRegisterPatient() {
         try {
-            manager.registerPatient(
-                    txtId.getText(),
+            String newPatientId = manager.registerPatient(
                     txtName.getText(),
                     txtAge.getText(),
                     (String) cmbPoli.getSelectedItem(),
@@ -387,7 +356,6 @@ public class ClinicFrame extends JFrame {
                     chkBpjs.isSelected(),
                     txtBpjsNo.getText()
             );
-            txtId.setText("");
             txtName.setText("");
             txtAge.setText("");
             txtComplaint.setText("");
@@ -395,17 +363,16 @@ public class ClinicFrame extends JFrame {
             chkBpjs.setSelected(false);
             txtBpjsNo.setEnabled(false);
 
-            txtId.setBorder(normalBorder);
             txtName.setBorder(normalBorder);
             txtAge.setBorder(normalBorder);
             txtBpjsNo.setBorder(normalBorder);
-            lblIdWarn.setText(" ");
             lblNameWarn.setText(" ");
             lblAgeWarn.setText(" ");
             lblBpjsWarn.setText(" ");
 
             refreshDisplay();
-            JOptionPane.showMessageDialog(this, "Pasien berhasil masuk ke dalam antrean!",
+            JOptionPane.showMessageDialog(this,
+                    "Pasien berhasil masuk ke dalam antrean!\nID Pasien: " + newPatientId,
                     "Pendaftaran Berhasil", JOptionPane.INFORMATION_MESSAGE, successIcon);
         } catch (InvalidPatientDataException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(),

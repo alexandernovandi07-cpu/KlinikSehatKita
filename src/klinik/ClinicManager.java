@@ -38,27 +38,15 @@ public class ClinicManager {
     }
 
     // WEEK 11 & WEEK 14: Throws Custom Checked Exception + Synchronized for Thread Safety
-    public synchronized void registerPatient(String rawId, String rawName, String rawAge,
-                                             String poliName, String complaint,
-                                             boolean isBpjs, String bpjsNo) throws InvalidPatientDataException {
-        String idInput = rawId.trim();
+    public synchronized String registerPatient(String rawName, String rawAge,
+                                               String poliName, String complaint,
+                                               boolean isBpjs, String bpjsNo) throws InvalidPatientDataException {
         String name = rawName.trim();
         String ageInput = rawAge.trim();
         String cleanComplaint = complaint.trim();
 
-        if (idInput.isEmpty() || name.isEmpty() || ageInput.isEmpty() || cleanComplaint.isEmpty()) {
-            throw new InvalidPatientDataException("ID, Nama, Umur, dan Keluhan tidak boleh kosong!");
-        }
-
-        // Validasi 1: ID Pasien wajib angka saja (tanpa huruf/simbol)
-        if (!idInput.matches("\\d+")) {
-            throw new InvalidPatientDataException("ID Pasien harus berupa angka saja (tanpa huruf atau simbol)!");
-        }
-        String id = "PSN-" + idInput;
-
-        // WEEK 10: Set prevents duplicate IDs
-        if (registeredIds.contains(id)) {
-            throw new InvalidPatientDataException("ID Pasien '" + id + "' sudah terdaftar!");
+        if (name.isEmpty() || ageInput.isEmpty() || cleanComplaint.isEmpty()) {
+            throw new InvalidPatientDataException("Nama, Umur, dan Keluhan tidak boleh kosong!");
         }
 
         // Validasi 2: Nama Lengkap wajib huruf KAPITAL semua (WEEK 9: toUpperCase & equals)
@@ -84,6 +72,8 @@ public class ClinicManager {
             throw new InvalidPatientDataException("Umur harus berada di antara 1 hingga 130 tahun!");
         }
 
+        String id = generatePatientId();
+
         double baseFee = polyTariffMap.getOrDefault(poliName, 75000.0);
         String fullComplaint = poliName + " - " + cleanComplaint;
 
@@ -106,6 +96,35 @@ public class ClinicManager {
         assert !waitingQueue.isEmpty() : "Internal Error: Antrean tidak boleh kosong setelah tambah pasien";
 
         logActivity("Pasien terdaftar ke antrean: " + newPatient.getName() + " (" + id + ")");
+        return id;
+    }
+
+    // Membuat ID otomatis berdasarkan nomor terbesar pada data pasien tersimpan.
+    private String generatePatientId() {
+        int maxNumber = 0;
+
+        for (Patient patient : patientHistory) {
+            String existingId = patient.getId();
+
+            if (existingId != null && existingId.matches("PSN-\\d+")) {
+                try {
+                    int number = Integer.parseInt(existingId.substring(4));
+                    maxNumber = Math.max(maxNumber, number);
+                } catch (NumberFormatException ignored) {
+                    // Abaikan ID lama yang angka belakangnya terlalu besar.
+                }
+            }
+        }
+
+        int nextNumber = maxNumber + 1;
+        String candidate = String.format("PSN-%03d", nextNumber);
+
+        while (registeredIds.contains(candidate)) {
+            nextNumber++;
+            candidate = String.format("PSN-%03d", nextNumber);
+        }
+
+        return candidate;
     }
 
     // WEEK 10: Polling from FIFO Queue
