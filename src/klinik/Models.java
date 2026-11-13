@@ -1,3 +1,4 @@
+
 package klinik;
 
 import java.io.Serializable;
@@ -11,11 +12,11 @@ class InvalidPatientDataException extends Exception {
 
 // WEEK 7: Interface (Abstraction & Capability)
 interface Billable {
-    double ADMIN_FEE = 15000.0; // public static final by default
+    double ADMIN_FEE = 15000.0;
 
-    double calculateTotalBill(); // abstract method
+    double calculateTotalBill();
 
-    // Java 8+ default method (Week 7)
+    // Java 8+ default method
     default String getCurrencyFormat(double amount) {
         return String.format("Rp %,.0f", amount);
     }
@@ -24,46 +25,64 @@ interface Billable {
 // WEEK 7 & WEEK 5: Abstract Class + Encapsulation
 abstract class Person implements Serializable {
     private static final long serialVersionUID = 1L;
-    
-    // WEEK 5: Private attributes for data hiding
+
     private String id;
     private String name;
     private int age;
 
-    // WEEK 2: Parameterized Constructor
+    // Parameterized Constructor
     public Person(String id, String name, int age) {
         this.id = id;
         this.name = name;
         this.age = age;
     }
 
-    // WEEK 7: Abstract method to be overridden by subclasses
     public abstract String getPatientCategory();
 
-    // WEEK 5: Public Getters and Setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    // Getters and Setters
+    public String getId() {
+        return id;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    public int getAge() { return age; }
-    public void setAge(int age) { this.age = age; }
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
 }
 
-// WEEK 4: Inheritance (Patient extends Person) & Comparable for Week 10 Collections.sort()
+// WEEK 4: Inheritance & Comparable
 abstract class Patient extends Person implements Billable, Comparable<Patient> {
     private static final long serialVersionUID = 1L;
 
-    // WEEK 3: Static variable (class-level counter) vs Instance variables
+    // Static variable
     private static int totalPatientsCreated = 0;
-    protected String complaint;
-    protected double baseConsultationFee;
 
-    public Patient(String id, String name, int age, String complaint, double baseConsultationFee) {
-        super(id, name, age); // WEEK 4: Calling superclass constructor via super()
-        this.complaint = complaint;
-        this.baseConsultationFee = baseConsultationFee;
+    // Encapsulation: atribut dibuat private
+    private String complaint;
+    private double baseConsultationFee;
+
+    public Patient(String id, String name, int age,
+                   String complaint, double baseConsultationFee) {
+        super(id, name, age);
+
+        setComplaint(complaint);
+        setBaseConsultationFee(baseConsultationFee);
+
         totalPatientsCreated++;
     }
 
@@ -71,14 +90,40 @@ abstract class Patient extends Person implements Billable, Comparable<Patient> {
         return totalPatientsCreated;
     }
 
-    public String getComplaint() { return complaint; }
-    public void setComplaint(String complaint) { this.complaint = complaint; }
+    // Getter and Setter complaint
+    public String getComplaint() {
+        return complaint;
+    }
 
-    public double getBaseConsultationFee() { return baseConsultationFee; }
+    public void setComplaint(String complaint) {
+        if (complaint == null || complaint.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                "Keluhan tidak boleh kosong"
+            );
+        }
 
-    // WEEK 9: StringBuilder used to generate formatted receipt text
+        this.complaint = complaint;
+    }
+
+    // Getter and Setter baseConsultationFee
+    public double getBaseConsultationFee() {
+        return baseConsultationFee;
+    }
+
+    public void setBaseConsultationFee(double fee) {
+        if (!Double.isFinite(fee) || fee < 0) {
+            throw new IllegalArgumentException(
+                "Tarif konsultasi tidak valid"
+            );
+        }
+
+        this.baseConsultationFee = fee;
+    }
+
+    // WEEK 9: StringBuilder for receipt
     public String generateReceipt() {
         StringBuilder sb = new StringBuilder();
+
         sb.append("========================================\n");
         sb.append("       STRUK PEMBAYARAN KLINIK          \n");
         sb.append("========================================\n");
@@ -86,32 +131,45 @@ abstract class Patient extends Person implements Billable, Comparable<Patient> {
         sb.append("Nama Pasien : ").append(getName()).append("\n");
         sb.append("Umur        : ").append(getAge()).append(" Tahun\n");
         sb.append("Kategori    : ").append(getPatientCategory()).append("\n");
-        sb.append("Keluhan     : ").append(complaint).append("\n");
+        sb.append("Keluhan     : ").append(getComplaint()).append("\n");
         sb.append("----------------------------------------\n");
-        sb.append("Total Biaya : ").append(getCurrencyFormat(calculateTotalBill())).append("\n");
+        sb.append("Total Biaya : ")
+          .append(getCurrencyFormat(calculateTotalBill()))
+          .append("\n");
         sb.append("========================================\n");
+
         return sb.toString();
     }
 
-    // Used by Collections.sort(), Collections.max(), Collections.min() (Week 10)
+    // WEEK 10: Comparable
     @Override
     public int compareTo(Patient other) {
-        return Double.compare(this.calculateTotalBill(), other.calculateTotalBill());
+        return Double.compare(
+            this.calculateTotalBill(),
+            other.calculateTotalBill()
+        );
     }
 
     @Override
     public String toString() {
-        return String.format("[%s] %s (%d thn) - %s | %s | Tagihan: %s",
-                getId(), getName(), getAge(), getPatientCategory(),
-                complaint, getCurrencyFormat(calculateTotalBill()));
+        return String.format(
+            "[%s] %s (%d thn) - %s | %s | Tagihan: %s",
+            getId(),
+            getName(),
+            getAge(),
+            getPatientCategory(),
+            getComplaint(),
+            getCurrencyFormat(calculateTotalBill())
+        );
     }
 }
 
-// WEEK 4 & WEEK 6: Multilevel & Hierarchical Inheritance + Method Overriding (Run-time Polymorphism)
+// WEEK 4 & WEEK 6: Inheritance and Polymorphism
 class RegulerPatient extends Patient {
     private static final long serialVersionUID = 1L;
 
-    public RegulerPatient(String id, String name, int age, String complaint, double baseFee) {
+    public RegulerPatient(String id, String name, int age,
+                          String complaint, double baseFee) {
         super(id, name, age, complaint, baseFee);
     }
 
@@ -122,22 +180,26 @@ class RegulerPatient extends Patient {
 
     @Override
     public double calculateTotalBill() {
-        // Reguler pays base fee + standard admin fee
-        return baseConsultationFee + ADMIN_FEE;
+        return getBaseConsultationFee() + ADMIN_FEE;
     }
 }
 
-// WEEK 4 & WEEK 6: Second Subclass for Hierarchical Inheritance & Dynamic Binding
+// WEEK 4 & WEEK 6: Hierarchical Inheritance
 class BPJSPatient extends Patient {
     private static final long serialVersionUID = 1L;
+
     private String bpjsNumber;
 
-    public BPJSPatient(String id, String name, int age, String complaint, double baseFee, String bpjsNumber) {
+    public BPJSPatient(String id, String name, int age,
+                       String complaint, double baseFee,
+                       String bpjsNumber) {
         super(id, name, age, complaint, baseFee);
         this.bpjsNumber = bpjsNumber;
     }
 
-    public String getBpjsNumber() { return bpjsNumber; }
+    public String getBpjsNumber() {
+        return bpjsNumber;
+    }
 
     @Override
     public String getPatientCategory() {
@@ -146,7 +208,6 @@ class BPJSPatient extends Patient {
 
     @Override
     public double calculateTotalBill() {
-        // BPJS patients receive an 80% subsidy on consultation and 0 admin fee
-        return baseConsultationFee * 0.20;
+        return getBaseConsultationFee() * 0.20;
     }
 }
