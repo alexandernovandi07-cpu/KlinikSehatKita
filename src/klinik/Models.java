@@ -10,13 +10,12 @@ class InvalidPatientDataException extends Exception {
     }
 }
 
-// WEEK 7: Interface (Abstraction & Capability)
+// WEEK 7: Interface
 interface Billable {
     double ADMIN_FEE = 15000.0;
 
     double calculateTotalBill();
 
-    // Java 8+ default method
     default String getCurrencyFormat(double amount) {
         return String.format("Rp %,.0f", amount);
     }
@@ -30,37 +29,53 @@ abstract class Person implements Serializable {
     private String name;
     private int age;
 
-    // Parameterized Constructor
     public Person(String id, String name, int age) {
-        this.id = id;
-        this.name = name;
-        this.age = age;
+        setId(id);
+        setName(name);
+        setAge(age);
     }
 
     public abstract String getPatientCategory();
 
-    // Getters and Setters
+    // Getter dan Setter ID
     public String getId() {
         return id;
     }
 
     public void setId(String id) {
-        this.id = id;
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                "ID pasien tidak boleh kosong"
+            );
+        }
+        this.id = id.trim();
     }
 
+    // Getter dan Setter Nama
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
-        this.name = name;
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                "Nama pasien tidak boleh kosong"
+            );
+        }
+        this.name = name.trim();
     }
 
+    // Getter dan Setter Umur
     public int getAge() {
         return age;
     }
 
     public void setAge(int age) {
+        if (age <= 0) {
+            throw new IllegalArgumentException(
+                "Umur harus lebih dari 0"
+            );
+        }
         this.age = age;
     }
 }
@@ -69,10 +84,9 @@ abstract class Person implements Serializable {
 abstract class Patient extends Person implements Billable, Comparable<Patient> {
     private static final long serialVersionUID = 1L;
 
-    // Static variable
     private static int totalPatientsCreated = 0;
 
-    // Encapsulation: atribut dibuat private
+    // Encapsulation
     private String complaint;
     private double baseConsultationFee;
 
@@ -90,7 +104,7 @@ abstract class Patient extends Person implements Billable, Comparable<Patient> {
         return totalPatientsCreated;
     }
 
-    // Getter and Setter complaint
+    // Getter dan Setter Keluhan
     public String getComplaint() {
         return complaint;
     }
@@ -101,11 +115,10 @@ abstract class Patient extends Person implements Billable, Comparable<Patient> {
                 "Keluhan tidak boleh kosong"
             );
         }
-
-        this.complaint = complaint;
+        this.complaint = complaint.trim();
     }
 
-    // Getter and Setter baseConsultationFee
+    // Getter dan Setter Tarif Konsultasi
     public double getBaseConsultationFee() {
         return baseConsultationFee;
     }
@@ -116,11 +129,10 @@ abstract class Patient extends Person implements Billable, Comparable<Patient> {
                 "Tarif konsultasi tidak valid"
             );
         }
-
         this.baseConsultationFee = fee;
     }
 
-    // WEEK 9: StringBuilder for receipt
+    // WEEK 9: StringBuilder
     public String generateReceipt() {
         StringBuilder sb = new StringBuilder();
 
@@ -194,11 +206,22 @@ class BPJSPatient extends Patient {
                        String complaint, double baseFee,
                        String bpjsNumber) {
         super(id, name, age, complaint, baseFee);
-        this.bpjsNumber = bpjsNumber;
+        setBpjsNumber(bpjsNumber);
     }
 
     public String getBpjsNumber() {
         return bpjsNumber;
+    }
+
+    public void setBpjsNumber(String bpjsNumber) {
+        if (bpjsNumber == null ||
+            !bpjsNumber.matches("\\d{13}")) {
+            throw new IllegalArgumentException(
+                "Nomor BPJS harus terdiri dari 13 digit angka"
+            );
+        }
+
+        this.bpjsNumber = bpjsNumber;
     }
 
     @Override
