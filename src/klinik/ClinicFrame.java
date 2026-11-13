@@ -1,3 +1,4 @@
+
 package klinik;
 
 import java.awt.*;
@@ -5,6 +6,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -16,6 +19,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
 
 public class ClinicFrame extends JFrame {
     private final ClinicManager manager = new ClinicManager();
@@ -41,6 +45,7 @@ public class ClinicFrame extends JFrame {
             BorderFactory.createLineBorder(new Color(180, 185, 190), 1),
             BorderFactory.createEmptyBorder(3, 6, 3, 6)
     );
+
     private final Border errorBorder = BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(Color.RED, 2),
             BorderFactory.createEmptyBorder(2, 5, 2, 5)
@@ -62,6 +67,7 @@ public class ClinicFrame extends JFrame {
         setSize(1140, 760);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+
         // WEEK 13: BorderLayout as main container layout
         setLayout(new BorderLayout(10, 10));
 
@@ -162,6 +168,7 @@ public class ClinicFrame extends JFrame {
         formPanel.add(txtComplaint);
         formPanel.add(chkBpjs);
         formPanel.add(new JLabel("Nomor Kartu BPJS (13 digit angka):"));
+
         txtBpjsNo.setEnabled(false);
         formPanel.add(txtBpjsNo);
         formPanel.add(lblBpjsWarn);
@@ -201,8 +208,29 @@ public class ClinicFrame extends JFrame {
         areaHistory.setEditable(false);
         areaHistory.setFont(new Font("Monospaced", Font.PLAIN, 12));
         areaHistory.setBackground(new Color(244, 251, 247));
+        areaHistory.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
         JScrollPane scrollHistory = new JScrollPane(areaHistory);
         scrollHistory.setBorder(new TitledBorder("Riwayat Seluruh Pasien (ArrayList)"));
+
+        // Klik satu kali pada baris pasien untuk melihat detail
+        areaHistory.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int offset = areaHistory.viewToModel2D(e.getPoint());
+
+                try {
+                    int line = areaHistory.getLineOfOffset(offset);
+                    List<Patient> patients = manager.getPatientHistory();
+
+                    if (line >= 0 && line < patients.size()) {
+                        showPatientDetail(patients.get(line));
+                    }
+                } catch (BadLocationException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
 
         centerPanel.add(scrollQueue);
         centerPanel.add(scrollHistory);
@@ -221,12 +249,15 @@ public class ClinicFrame extends JFrame {
         buttonPanel.add(btnCallNext);
         buttonPanel.add(btnStats);
         buttonPanel.add(btnSave);
+
         JButton btnReset = new JButton("Reset Data");
         buttonPanel.add(btnReset);
+
         btnReset.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this,
                     "Hapus seluruh riwayat dan antrean pasien?", "Konfirmasi Reset",
                     JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, warningIcon);
+
             if (confirm == JOptionPane.YES_OPTION) {
                 manager.resetDatabase();
                 refreshDisplay();
@@ -234,6 +265,7 @@ public class ClinicFrame extends JFrame {
                         "Reset Berhasil", JOptionPane.INFORMATION_MESSAGE, successIcon);
             }
         });
+
         buttonPanel.add(lblSearch);
         buttonPanel.add(txtSearch);
         buttonPanel.add(btnSearch);
@@ -288,10 +320,12 @@ public class ClinicFrame extends JFrame {
                 lblNameWarn.setText(" ");
             }
         };
+
         txtName.addFocusListener(new FocusAdapter() {
             @Override
             public void focusLost(FocusEvent e) { validateName.run(); }
         });
+
         txtName.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { validateName.run(); }
             public void removeUpdate(DocumentEvent e) { validateName.run(); }
@@ -309,10 +343,12 @@ public class ClinicFrame extends JFrame {
                 lblAgeWarn.setText(" ");
             }
         };
+
         txtAge.addFocusListener(new FocusAdapter() {
             @Override
             public void focusLost(FocusEvent e) { validateAge.run(); }
         });
+
         txtAge.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { validateAge.run(); }
             public void removeUpdate(DocumentEvent e) { validateAge.run(); }
@@ -326,6 +362,7 @@ public class ClinicFrame extends JFrame {
                 lblBpjsWarn.setText(" ");
                 return;
             }
+
             String val = txtBpjsNo.getText().trim();
             if (!val.matches("\\d{13}")) {
                 txtBpjsNo.setBorder(errorBorder);
@@ -335,10 +372,12 @@ public class ClinicFrame extends JFrame {
                 lblBpjsWarn.setText(" ");
             }
         };
+
         txtBpjsNo.addFocusListener(new FocusAdapter() {
             @Override
             public void focusLost(FocusEvent e) { validateBpjs.run(); }
         });
+
         txtBpjsNo.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { validateBpjs.run(); }
             public void removeUpdate(DocumentEvent e) { validateBpjs.run(); }
@@ -356,6 +395,7 @@ public class ClinicFrame extends JFrame {
                     chkBpjs.isSelected(),
                     txtBpjsNo.getText()
             );
+
             txtName.setText("");
             txtAge.setText("");
             txtComplaint.setText("");
@@ -366,14 +406,17 @@ public class ClinicFrame extends JFrame {
             txtName.setBorder(normalBorder);
             txtAge.setBorder(normalBorder);
             txtBpjsNo.setBorder(normalBorder);
+
             lblNameWarn.setText(" ");
             lblAgeWarn.setText(" ");
             lblBpjsWarn.setText(" ");
 
             refreshDisplay();
+
             JOptionPane.showMessageDialog(this,
                     "Pasien berhasil masuk ke dalam antrean!\nID Pasien: " + newPatientId,
                     "Pendaftaran Berhasil", JOptionPane.INFORMATION_MESSAGE, successIcon);
+
         } catch (InvalidPatientDataException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(),
                     "Validasi Input Gagal", JOptionPane.WARNING_MESSAGE, warningIcon);
@@ -384,18 +427,24 @@ public class ClinicFrame extends JFrame {
 
     private void handleCallNextPatient() {
         Patient called = manager.callNextPatient();
+
         if (called == null) {
             JOptionPane.showMessageDialog(this, "Antrean saat ini kosong!",
                     "Info Antrean", JOptionPane.WARNING_MESSAGE, warningIcon);
             return;
         }
+
         String fileName = "Struk_" + called.getId() + ".txt";
+
         try {
             manager.exportReceiptToTxt(called, fileName);
             refreshDisplay();
+
             JOptionPane.showMessageDialog(this,
                     called.generateReceipt() + "\nStruk telah diekspor ke file: " + fileName,
-                    "Pasien Dipanggil & Struk Dicetak", JOptionPane.INFORMATION_MESSAGE, successIcon);
+                    "Pasien Dipanggil & Struk Dicetak",
+                    JOptionPane.INFORMATION_MESSAGE, successIcon);
+
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, "Gagal mencetak struk: " + ex.getMessage(),
                     "File I/O Error", JOptionPane.ERROR_MESSAGE, warningIcon);
@@ -404,24 +453,65 @@ public class ClinicFrame extends JFrame {
 
     private void handleSearch() {
         String query = txtSearch.getText().trim();
+
         if (query.isEmpty()) return;
 
-        Patient byId = manager.searchPatient(query.startsWith("PSN-") ? query : "PSN-" + query);
+        Patient byId = manager.searchPatient(
+                query.startsWith("PSN-") ? query : "PSN-" + query);
+
         if (byId != null) {
             JOptionPane.showMessageDialog(this, "Ditemukan via ID:\n" + byId.generateReceipt(),
                     "Hasil Pencarian", JOptionPane.INFORMATION_MESSAGE, successIcon);
             return;
         }
+
         List<Patient> byName = manager.searchPatient(query, 0);
+
         if (byName.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Pasien '" + query + "' tidak ditemukan.",
                     "Hasil Pencarian", JOptionPane.WARNING_MESSAGE, warningIcon);
         } else {
             StringBuilder sb = new StringBuilder("Ditemukan " + byName.size() + " pasien:\n\n");
-            for (Patient p : byName) sb.append(p.toString()).append("\n");
+
+            for (Patient p : byName) {
+                sb.append(p.toString()).append("\n");
+            }
+
             JOptionPane.showMessageDialog(this, sb.toString(),
                     "Hasil Pencarian", JOptionPane.INFORMATION_MESSAGE, successIcon);
         }
+    }
+
+    // Menampilkan detail pasien
+    private void showPatientDetail(Patient patient) {
+        String jenisPasien;
+        String nomorBpjs = "-";
+
+        if (patient instanceof BPJSPatient) {
+            BPJSPatient bpjsPatient = (BPJSPatient) patient;
+            jenisPasien = "BPJS";
+
+            String number = bpjsPatient.getBpjsNumber();
+            nomorBpjs = "*********" + number.substring(9);
+        } else {
+            jenisPasien = "Reguler";
+        }
+
+        String detail =
+                "ID Pasien       : " + patient.getId() + "\n" +
+                "Nama            : " + patient.getName() + "\n" +
+                "Umur            : " + patient.getAge() + " tahun\n" +
+                "Jenis Pasien    : " + jenisPasien + "\n" +
+                "Nomor BPJS      : " + nomorBpjs + "\n" +
+                "Keluhan         : " + patient.getComplaint() + "\n" +
+                "Total Tagihan   : " +
+                patient.getCurrencyFormat(patient.calculateTotalBill());
+
+        JOptionPane.showMessageDialog(this,
+                detail,
+                "Detail Pasien",
+                JOptionPane.INFORMATION_MESSAGE,
+                successIcon);
     }
 
     private void loadInitialData() {
@@ -430,22 +520,34 @@ public class ClinicFrame extends JFrame {
         } catch (Exception ex) {
             manager.logActivity("Memulai dengan database baru.");
         }
+
         refreshDisplay();
     }
 
     private void refreshDisplay() {
         StringBuilder qText = new StringBuilder();
         int pos = 1;
+
         for (Patient p : manager.getWaitingQueue()) {
             qText.append(pos++).append(". ").append(p.toString()).append("\n");
         }
-        areaQueue.setText(qText.length() == 0 ? "(Tidak ada pasien dalam antrean)" : qText.toString());
+
+        areaQueue.setText(
+                qText.length() == 0
+                        ? "(Tidak ada pasien dalam antrean)"
+                        : qText.toString());
 
         StringBuilder hText = new StringBuilder();
+
         for (Patient p : manager.getPatientHistory()) {
             hText.append("• ").append(p.toString()).append("\n");
         }
-        areaHistory.setText(hText.length() == 0 ? "(Belum ada riwayat pasien)" : hText.toString());
+
+        areaHistory.setText(
+                hText.length() == 0
+                        ? "(Belum ada riwayat pasien)"
+                        : hText.toString());
+
         areaLog.setText(manager.getActivityLog());
     }
 
@@ -453,7 +555,8 @@ public class ClinicFrame extends JFrame {
     private void startBackgroundThread() {
         Runnable backgroundTask = new Runnable() {
             private int secondsCounter = 0;
-            private final SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+            private final SimpleDateFormat sdf =
+                    new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
             @Override
             public void run() {
@@ -461,27 +564,38 @@ public class ClinicFrame extends JFrame {
                     try {
                         Thread.sleep(1000);
                         secondsCounter++;
+
                         String timeStr = sdf.format(new Date());
 
-                        if (secondsCounter % 30 == 0 && !manager.getPatientHistory().isEmpty()) {
+                        if (secondsCounter % 30 == 0
+                                && !manager.getPatientHistory().isEmpty()) {
                             manager.saveDatabaseToFile();
                             SwingUtilities.invokeLater(() -> refreshDisplay());
                         }
 
                         final int nextSave = 30 - (secondsCounter % 30);
-                        SwingUtilities.invokeLater(() -> lblClockAndThread.setText(
-                                "Jam: " + timeStr + " | Auto-Save Thread: Aktif (" + nextSave + "d)"
-                        ));
+
+                        SwingUtilities.invokeLater(() ->
+                                lblClockAndThread.setText(
+                                        "Jam: " + timeStr
+                                                + " | Auto-Save Thread: Aktif ("
+                                                + nextSave + "d)"
+                                ));
+
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         break;
                     } catch (IOException ioEx) {
-                        System.err.println("Auto-save gagal: " + ioEx.getMessage());
+                        System.err.println(
+                                "Auto-save gagal: " + ioEx.getMessage());
                     }
                 }
             }
         };
-        Thread daemonThread = new Thread(backgroundTask, "Clinic-AutoSave-Thread");
+
+        Thread daemonThread = new Thread(
+                backgroundTask, "Clinic-AutoSave-Thread");
+
         daemonThread.setDaemon(true);
         daemonThread.start();
     }
