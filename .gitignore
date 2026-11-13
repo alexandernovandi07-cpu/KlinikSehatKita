@@ -1,0 +1,15 @@
+# Compiled Java files
+*.class
+out/
+bin/
+build/
+
+# Runtime generated files
+*.ser
+Struk_*.txt
+
+# IDE & macOS files
+.idea/
+*.iml
+.vscode/
+.DS_Store
